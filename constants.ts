@@ -7,7 +7,7 @@ export const GAME_CONSTANTS = {
   ACCELERATION: 0.07,
   FRICTION: 0.97,
   WIND_FORCE: 0.03,
-  PECHA_CONTACT_TIME: 700, // Increased from 350ms to 700ms for easier reaction
+  PECHA_CONTACT_TIME: 350,
   ATTACK_DURATION: 1200,
   ATTACK_COOLDOWN: 4500,
   STRING_ANCHOR_Y: window.innerHeight,
