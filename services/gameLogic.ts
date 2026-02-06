@@ -117,8 +117,8 @@ export const handlePechaLogic = (
         const attacker = updatedKites[attackerIdx];
         const defender = updatedKites[defenderIdx];
         
-        // Height Advantage: Attacker must be higher (lower Y) than defender or close to it
-        const heightAdvantage = attacker.pos.y < (defender.pos.y + 40); 
+        // Height Advantage: Increased buffer from 40 to 60 to make it even easier for player
+        const heightAdvantage = attacker.pos.y < (defender.pos.y + 60); 
         
         if (attacker.attackActive && heightAdvantage) {
           updatedKites[defenderIdx] = { ...defender, isCut: true };
@@ -130,11 +130,11 @@ export const handlePechaLogic = (
 
       if (k1.attackActive) resolvePecha(k1Index, k2Index);
       else if (k2.attackActive) resolvePecha(k2Index, k1Index);
-      // SIGNIFICANTLY lowered AI attack probability for fairness (from 0.05 to 0.01)
-      else if (k1.isAI && Math.random() < 0.01) {
+      // AI attack chance kept extremely low
+      else if (k1.isAI && Math.random() < 0.005) {
          updatedKites[k1Index].attackActive = true;
          updatedKites[k1Index].attackEndTime = now + 1200;
-      } else if (k2.isAI && Math.random() < 0.01) {
+      } else if (k2.isAI && Math.random() < 0.005) {
          updatedKites[k2Index].attackActive = true;
          updatedKites[k2Index].attackEndTime = now + 1200;
       }
