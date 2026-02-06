@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GameMode } from './types';
 import MainMenu from './components/MainMenu';
 import GameView from './components/GameView';
@@ -23,7 +23,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-screen bg-sky-400 overflow-hidden font-sans">
+    <div className="relative w-full h-[100dvh] bg-[#020617] overflow-hidden font-sans touch-none">
       {mode === GameMode.MENU ? (
         <MainMenu 
           onStartPractice={handleStartPractice} 
