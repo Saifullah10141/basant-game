@@ -69,7 +69,7 @@ export const checkCollisions = (kites: Kite[]): { isIntersecting: boolean, point
       if (k1.isCut || k2.isCut) continue;
 
       const getAnchor = (k: Kite) => {
-        if (k.id === 'player' || k.id.startsWith('local')) return GAME_CONSTANTS.CANVAS_WIDTH / 2;
+        if (k.id === 'player' || k.id.startsWith('p-')) return GAME_CONSTANTS.CANVAS_WIDTH / 2;
         const seed = parseInt(k.id.replace(/[^0-9]/g, '') || '0');
         return (GAME_CONSTANTS.CANVAS_WIDTH / 6) * ((seed % 5) + 1);
       };
@@ -118,23 +118,23 @@ export const handlePechaLogic = (
         const defender = updatedKites[defenderIdx];
         
         // Height Advantage: Attacker must be higher (lower Y) than defender or close to it
-        // Buffed threshold to 50px to make it easier to cut while attacking
-        const heightAdvantage = attacker.pos.y < (defender.pos.y + 50); 
+        const heightAdvantage = attacker.pos.y < (defender.pos.y + 40); 
         
         if (attacker.attackActive && heightAdvantage) {
           updatedKites[defenderIdx] = { ...defender, isCut: true };
           updatedKites[attackerIdx] = { ...attacker, score: attacker.score + 1 };
-          cutMessage = `${attacker.name} CUT ${defender.name}!`;
+          cutMessage = `${attacker.name} KHO-OOCH!`;
           updatedPecha = { isIntersecting: false, contactStartTime: null, intersectPoint: null, kites: ['', ''] };
         }
       };
 
       if (k1.attackActive) resolvePecha(k1Index, k2Index);
       else if (k2.attackActive) resolvePecha(k2Index, k1Index);
-      else if (k1.isAI && Math.random() < 0.05) {
+      // SIGNIFICANTLY lowered AI attack probability for fairness (from 0.05 to 0.01)
+      else if (k1.isAI && Math.random() < 0.01) {
          updatedKites[k1Index].attackActive = true;
          updatedKites[k1Index].attackEndTime = now + 1200;
-      } else if (k2.isAI && Math.random() < 0.05) {
+      } else if (k2.isAI && Math.random() < 0.01) {
          updatedKites[k2Index].attackActive = true;
          updatedKites[k2Index].attackEndTime = now + 1200;
       }
