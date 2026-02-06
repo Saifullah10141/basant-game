@@ -1,12 +1,17 @@
 <?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Basic error handling for pure JSON output
 error_reporting(0);
 ini_set('display_errors', 0);
-header('Content-Type: application/json');
 
-$roomsDir = __DIR__ . '/../rooms/';
+$roomsDir = __DIR__ . '/rooms/';
 if (!is_dir($roomsDir)) {
-    if (!mkdir($roomsDir, 0777, true)) {
-        echo json_encode(['success' => false, 'message' => 'Could not create rooms directory.']);
+    if (!mkdir($roomsDir, 0755, true)) {
+        echo json_encode(['success' => false, 'message' => 'Directory creation failed. Check folder permissions.']);
         exit;
     }
 }
@@ -20,9 +25,10 @@ $roomData = [
     'last_update' => time()
 ];
 
-if (file_put_contents($roomsDir . $roomId . '.json', json_encode($roomData))) {
+$filePath = $roomsDir . $roomId . '.json';
+if (file_put_contents($filePath, json_encode($roomData))) {
     echo json_encode(['success' => true, 'room_id' => $roomId]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Could not save room file.']);
+    echo json_encode(['success' => false, 'message' => 'Write failed. Ensure api/rooms/ is writable.']);
 }
 ?>

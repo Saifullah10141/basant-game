@@ -1,11 +1,13 @@
 <?php
-error_reporting(0);
+ob_start();
+error_reporting(E_ALL);
 ini_set('display_errors', 0);
+
 header('Content-Type: application/json');
 
 $roomId = $_GET['room_id'] ?? '';
 $playerId = $_GET['player_id'] ?? '';
-$roomsDir = __DIR__ . '/../rooms/';
+$roomsDir = __DIR__ . '/rooms/';
 $roomFile = $roomsDir . $roomId . '.json';
 
 if (file_exists($roomFile)) {
@@ -21,5 +23,6 @@ if (file_exists($roomFile)) {
     }
 }
 
+ob_end_clean();
 echo json_encode(['success' => true]);
 ?>
