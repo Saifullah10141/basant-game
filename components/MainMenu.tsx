@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface MainMenuProps {
@@ -16,14 +15,16 @@ const MainMenu: React.FC<MainMenuProps> = ({ onStartPractice, onJoinMultiplayer 
     setError(null);
     try {
       const res = await fetch('api/create_room.php');
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       if (data.success) {
         onJoinMultiplayer(data.room_id);
       } else {
-        setError('Failed to create room.');
+        setError(data.message || 'Failed to create room.');
       }
-    } catch (e) {
-      setError('Connection error.');
+    } catch (e: any) {
+      console.error(e);
+      setError('Connection error: ' + (e.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -35,14 +36,16 @@ const MainMenu: React.FC<MainMenuProps> = ({ onStartPractice, onJoinMultiplayer 
     setError(null);
     try {
       const res = await fetch(`api/join_room.php?room_id=${roomInput}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       if (data.success) {
         onJoinMultiplayer(roomInput);
       } else {
         setError(data.message || 'Room not found.');
       }
-    } catch (e) {
-      setError('Connection error.');
+    } catch (e: any) {
+      console.error(e);
+      setError('Connection error: ' + (e.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +91,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onStartPractice, onJoinMultiplayer 
               onChange={(e) => setRoomInput(e.target.value.toUpperCase())}
               className="w-full bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-purple-500 text-center uppercase tracking-widest font-black placeholder:text-white/20"
             />
-            {error && <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest">{error}</p>}
+            {error && <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest bg-red-400/10 p-2 rounded-lg">{error}</p>}
             <div className="grid grid-cols-2 gap-3 w-full">
               <button 
                 disabled={loading || !roomInput}

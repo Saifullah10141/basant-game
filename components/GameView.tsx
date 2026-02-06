@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GameMode, Kite, PechaState, MatchStatus } from '../types';
 import { GAME_CONSTANTS, INITIAL_WIND } from '../constants';
@@ -27,15 +26,20 @@ const GameView: React.FC<GameViewProps> = ({ mode, roomId, onExit }) => {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   
   const requestRef = useRef<number>(0);
-  const lastTimeRef = useRef<number>(0);
   const playerIdRef = useRef<string>(`local-${Math.random().toString(36).substr(2, 5)}`);
+  const kitesRef = useRef<Kite[]>([]);
+
+  // Keep ref in sync for the interval without triggering re-runs
+  useEffect(() => {
+    kitesRef.current = kites;
+  }, [kites]);
 
   // Multiplayer Polling
   useEffect(() => {
     if (mode !== GameMode.MULTIPLAYER || !roomId) return;
 
     const pollInterval = setInterval(async () => {
-      const localPlayer = kites.find(k => k.id === playerIdRef.current);
+      const localPlayer = kitesRef.current.find(k => k.id === playerIdRef.current);
       if (!localPlayer) return;
 
       try {
@@ -47,25 +51,30 @@ const GameView: React.FC<GameViewProps> = ({ mode, roomId, onExit }) => {
             player: { ...localPlayer, last_seen: Math.floor(Date.now() / 1000) }
           })
         });
+        
+        if (!res.ok) throw new Error('Server error');
+        
         const data = await res.json();
         if (data.success) {
-          const players = Object.values(data.room.players) as Kite[];
+          const remotePlayers = Object.values(data.room.players) as Kite[];
           setKites(prev => {
-            const updated = players.map(remoteP => {
-              if (remoteP.id === playerIdRef.current) return prev.find(p => p.id === playerIdRef.current) || remoteP;
-              return remoteP;
+            const currentLocal = prev.find(p => p.id === playerIdRef.current);
+            return remotePlayers.map(rp => {
+              if (rp.id === playerIdRef.current) return currentLocal || rp;
+              return rp;
             });
-            return updated;
           });
         }
-      } catch (e) { console.error("Sync error", e); }
-    }, 150);
+      } catch (e) { 
+        console.error("Sync error", e); 
+      }
+    }, 200);
 
     return () => {
       clearInterval(pollInterval);
-      fetch(`api/leave.php?room_id=${roomId}&player_id=${playerIdRef.current}`);
+      fetch(`api/leave.php?room_id=${roomId}&player_id=${playerIdRef.current}`).catch(() => {});
     };
-  }, [mode, roomId, kites]);
+  }, [mode, roomId]); // Removed kites from dependency to prevent interval spam
 
   // Initial Setup
   useEffect(() => {
@@ -156,7 +165,7 @@ const GameView: React.FC<GameViewProps> = ({ mode, roomId, onExit }) => {
       const activeEnemies = updatedKites.filter(k => k.id !== playerIdRef.current && !k.isCut);
       
       if (player?.isCut) setMatchStatus('DEFEAT');
-      else if (activeEnemies.length === 0 && mode === GameMode.PRACTICE) setMatchStatus('VICTORY');
+      else if (mode === GameMode.PRACTICE && activeEnemies.length === 0) setMatchStatus('VICTORY');
 
       return updatedKites;
     });
@@ -215,7 +224,7 @@ const GameView: React.FC<GameViewProps> = ({ mode, roomId, onExit }) => {
         onExit={onExit} 
         wind={wind}
         roomId={roomId}
-        isAlone={mode === GameMode.MULTIPLAYER && kites.length === 1}
+        isAlone={mode === GameMode.MULTIPLAYER && kites.length <= 1}
       />
 
       {matchStatus !== 'PLAYING' && (
