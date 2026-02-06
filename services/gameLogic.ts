@@ -1,3 +1,4 @@
+
 import { Kite, Vector2D, PechaState } from '../types';
 import { GAME_CONSTANTS } from '../constants';
 
@@ -104,27 +105,38 @@ export const handlePechaLogic = (
 
     const contactDuration = now - (updatedPecha.contactStartTime || now);
     if (contactDuration > GAME_CONSTANTS.PECHA_CONTACT_TIME) {
-      const k1 = updatedKites.find(k => k.id === updatedPecha.kites[0])!;
-      const k2 = updatedKites.find(k => k.id === updatedPecha.kites[1])!;
+      const k1Index = updatedKites.findIndex(k => k.id === updatedPecha.kites[0]);
+      const k2Index = updatedKites.findIndex(k => k.id === updatedPecha.kites[1]);
+      
+      if (k1Index === -1 || k2Index === -1) return { updatedKites, updatedPecha, cutMessage: null };
+      
+      const k1 = updatedKites[k1Index];
+      const k2 = updatedKites[k2Index];
 
-      const resolvePecha = (attacker: Kite, defender: Kite) => {
-        // Simplified Skill logic: If Attacking and higher up, you cut them.
-        const heightAdvantage = attacker.pos.y < (defender.pos.y + 20); 
+      const resolvePecha = (attackerIdx: number, defenderIdx: number) => {
+        const attacker = updatedKites[attackerIdx];
+        const defender = updatedKites[defenderIdx];
+        
+        // Height Advantage: Attacker must be higher (lower Y) than defender or close to it
+        // Buffed threshold to 50px to make it easier to cut while attacking
+        const heightAdvantage = attacker.pos.y < (defender.pos.y + 50); 
         
         if (attacker.attackActive && heightAdvantage) {
-          defender.isCut = true;
-          attacker.score += 1;
+          updatedKites[defenderIdx] = { ...defender, isCut: true };
+          updatedKites[attackerIdx] = { ...attacker, score: attacker.score + 1 };
           cutMessage = `${attacker.name} CUT ${defender.name}!`;
           updatedPecha = { isIntersecting: false, contactStartTime: null, intersectPoint: null, kites: ['', ''] };
         }
       };
 
-      if (k1.attackActive) resolvePecha(k1, k2);
-      else if (k2.attackActive) resolvePecha(k2, k1);
-      else if (k2.isAI && Math.random() < 0.02) {
-         k2.attackActive = true;
-         k2.attackEndTime = now + 1200;
-         resolvePecha(k2, k1);
+      if (k1.attackActive) resolvePecha(k1Index, k2Index);
+      else if (k2.attackActive) resolvePecha(k2Index, k1Index);
+      else if (k1.isAI && Math.random() < 0.05) {
+         updatedKites[k1Index].attackActive = true;
+         updatedKites[k1Index].attackEndTime = now + 1200;
+      } else if (k2.isAI && Math.random() < 0.05) {
+         updatedKites[k2Index].attackActive = true;
+         updatedKites[k2Index].attackEndTime = now + 1200;
       }
     }
   } else {
